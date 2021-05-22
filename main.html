@@ -1,0 +1,217 @@
+<!DOCTYPE htnl>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>マインスイーパー</title>
+  <style type="text/css">
+    #field td {
+      border: 1px solid black;
+      width: 50px;
+      height: 50px;
+      background-color: gray;
+      text-align: center;
+      vertical-align: middle;
+      table-layout: fixed;
+      padding: 1px 1px 1px 1px;
+      font-size: 33px;
+    }
+  </style>
+</head>
+<body>
+  <button type="button" id="fla_true" onclick="fla_true()">🚩</button>
+  <button type="button" id="fla_false" onclick="fla_false()">穴あけ</button>
+  <p id="now_flag"></p>
+  <p id="judge"></p>
+  <table id="field"></table>
+  <button type="button" id="ban_init" onclick="ban_init()">やり直し</button>
+
+  <script type="text/javascript">
+    // 🚩が-１開けるのが1
+    var now_f = 1
+    var wide = 8
+    var high = 8
+    var ra_num = 3
+
+    var ban_open = new Array(high)
+    for (var x = 0; x < ban_open.length; x++) {
+      ban_open[x] = new Array(wide)
+    }
+
+    var ban_ar = new Array(high + 2)
+    for (var x = 0; x < ban_ar.length; x++) {
+      ban_ar[x] = new Array(wide + 2)
+    }
+    var ban = document.getElementById('field')
+
+    ban_new()
+
+    ban_init()
+
+    for (var x = 0; x < high; x++) {
+      for (var y = 0; y < wide; y++) {
+        var select_cell = ban.rows[x].cells[y];
+        select_cell.onclick = function () {
+          var xx = this.parentNode.rowIndex
+          var yy = this.cellIndex
+          if (now_f == 1) {
+            if (ban_ar[xx + 1][yy + 1] == 0) {
+              var open_cell = []
+              var i
+              var j
+              open_cell.push(xx)
+              open_cell.push(yy)
+              ban_open[xx][yy] = 1
+              while (open_cell.length != 0) {
+                j = open_cell.pop()
+                i = open_cell.pop()
+                if (ban_ar[i + 1][j + 1] > 0) {
+                } else {
+                  for (var sp_x = i - 1; sp_x <= i + 1; sp_x++) {
+                    for (var sp_y = j - 1; sp_y <= j + 1; sp_y++) {
+                      if (i == sp_x && j == sp_y) {
+                      } else {
+                        if (isEnd(sp_x, sp_y) != 1 && ban_open[sp_x][sp_y] != 1) {
+                          open_cell.push(sp_x, sp_y)
+                          ban_open[sp_x][sp_y] = 1
+                        }
+                      }
+                    }
+                  }
+                }
+
+              }
+            } else {
+              ban_open[xx][yy] = 1
+            }
+          } else {
+            if (ban_open[xx][yy] == -1) {
+              ban_open[xx][yy] = 0
+            } else {
+              ban_open[xx][yy] = -1
+            }
+          }
+          ban_set()
+          isJudge()
+        }
+      }
+    }
+
+    function fla_true() {
+      var flag_msg = document.getElementById('now_flag')
+      now_f = -1
+      flag_msg.textContent = "🚩"
+    };
+
+    function fla_false() {
+      var flag_msg = document.getElementById('now_flag')
+      now_f = 1
+      flag_msg.textContent = "穴あけ"
+    };
+
+    function ban_new() {
+      for (var x = 0; x < high; x++) {
+        var tr = document.createElement("tr")
+        ban.appendChild(tr)
+        for (var y = 0; y < wide; y++) {
+          var td = document.createElement("td")
+          tr.appendChild(td)
+        }
+      }
+    };
+
+
+    function ban_init() {
+      now_f = 1
+      var flag_msg = document.getElementById('now_flag')
+      flag_msg.textContent = "穴あけ"
+      var lose_msg = document.getElementById('judge')
+      lose_msg.textContent = ""
+      for (var x = 0; x < high; x++) {
+        for (var y = 0; y < wide; y++) {
+          ban.rows[x].cells[y].style.backgroundColor = "gray"
+          ban_open[x][y] = 0
+        }
+      }
+      for (var x = 0; x < high + 2; x++) {
+        for (var y = 0; y < wide + 2; y++) {
+          ban_ar[x][y] = 0
+        }
+      }
+
+      for (var num = 0; num < ra_num; num++) {
+        var xra_max = high + 1
+        var yra_max = wide + 1
+        var ra_x = Math.floor(Math.random() * (xra_max - 1)) + 1
+        var ra_y = Math.floor(Math.random() * (yra_max - 1)) + 1
+        if (ban_ar[ra_x][ra_y] == -1) {
+          num--;
+        } else {
+          ban_ar[ra_x][ra_y] = -1
+          for (var sur_x = ra_x - 1; sur_x <= ra_x + 1; sur_x++) {
+            for (var sur_y = ra_y - 1; sur_y <= ra_y + 1; sur_y++) {
+              if (sur_x == ra_x && sur_y == ra_y) {
+              } else if (ban_ar[sur_x][sur_y] != -1) {
+                ban_ar[sur_x][sur_y]++
+              }
+            }
+          }
+        }
+      }
+      ban_set()
+    };
+
+    function ban_set() {
+      var cell_mark = ""
+      for (var x = 0; x < high; x++) {
+        for (var y = 0; y < wide; y++) {
+          if (ban_open[x][y] == 1) {
+            ban.rows[x].cells[y].style.backgroundColor = "white"
+            if (ban_ar[x + 1][y + 1] > 0) {
+              cell_mark = String(ban_ar[x + 1][y + 1])
+            } else if (ban_ar[x + 1][y + 1] == -1) {
+              cell_mark = "💣"
+            } else {
+              cell_mark = ""
+            }
+          } else if (ban_open[x][y] == -1) {
+            cell_mark = "🚩"
+          } else {
+            cell_mark = ""
+          }
+          ban.rows[x].cells[y].innerText = cell_mark;
+        }
+      }
+      return true;
+    };
+
+    function isEnd(x, y) {
+      if (x < 0 || x >= high || y < 0 || y >= wide) {
+        return 1;
+      } else {
+        return 0;
+      }
+    }
+
+    function isJudge() {
+      var flag_cnt = 0
+      for (var x = 0; x < high; x++) {
+        for (var y = 0; y < wide; y++) {
+          if (ban_open[x][y] == 1 && ban_ar[x + 1][y + 1] == -1) {
+            var lose_msg = document.getElementById('judge')
+            lose_msg.textContent = "あなたの負け"
+            return
+          } else if (ban_open[x][y] == -1 && ban_ar[x + 1][y + 1] == -1) {
+            flag_cnt++
+          }
+        }
+      }
+      if (flag_cnt == ra_num) {
+        var lose_msg = document.getElementById('judge')
+        lose_msg.textContent = "あなたの勝ち"
+        return
+      }
+    }
+
+  </script>
+</body>
+</html>
